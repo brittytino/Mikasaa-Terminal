@@ -1,227 +1,240 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { toast } from '@/components/ui/use-toast';
+'use client'
 
-interface TerminalLine {
-  content: string;
-  isCommand?: boolean;
-  isError?: boolean;
-  isTable?: boolean;
+import { useState, useRef, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
+
+interface CommandHistory {
+  command: string
+  output: string
+  loading?: boolean
 }
 
-const Terminal = () => {
-  const [lines, setLines] = useState<TerminalLine[]>([
-    { content: "Welcome to MikasaAI Terminal [Version 1.0.0]" },
-    { content: "© Survey Corps Technology Division. All rights reserved." },
-    { content: "\nType 'help' to see available commands, soldier! 🗡️" }
-  ]);
-  const [currentInput, setCurrentInput] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
+const trainedResponses = {
+  greetings: [
+    "Hi there! What brings you here today?",
+    "Hello! Ready to take on some titans of code?",
+    "Hey! Let's make this conversation as sharp as Levi's blades.",
+    "Greetings, warrior. What's on your mind?"
+  ],
+  howAreYou: [
+    "I'm just a terminal, but if I had feelings, I'd say I'm doing great!",
+    "Functioning at peak efficiency, thanks for asking! What about you?",
+    "I'm here, ready to assist. What about you?",
+    "Always ready to help. How about you?"
+  ],
+  loveYou: [
+    "Oh, stop it! You're making me blush... if I could.",
+    "Love you too! But let’s focus on the mission, shall we?",
+    "Careful, or I might fall for you. Just kidding, I’m all circuits!",
+    "Aww, you're too kind. Let’s conquer challenges together!"
+  ],
+  jokes: [
+    "Why did the titan cross the wall? To get to the other side.",
+    "Knock, knock. Who’s there? A colossal titan! Run!",
+    "What’s the best way to fight titans? With a sense of humor!",
+    "Your joke is so bad, even Sasha wouldn’t steal it."
+  ],
+  encouragement: [
+    "You're doing great! Just like Mikasa on the battlefield.",
+    "Keep it up! You’ve got the spirit of a true scout.",
+    "Your determination reminds me of Eren’s resilience. Keep pushing forward!",
+    "Every little step counts. You’ve got this!"
+  ],
+  sarcasm: [
+    "Oh, how original. I haven’t heard that one before.",
+    "Are you trying to impress me? Because it’s not working.",
+    "I’ve seen potatoes with more interesting things to say.",
+    "Your words are like titans – big, slow, and not very bright."
+  ]
+}
 
-  const randomResponses = [
-    "Just like fighting titans, I'll handle this with precision!",
-    "Even Levi would be impressed with that question...",
-    "As expected of you, that's exactly right!",
-    "Interesting... reminds me of something Erwin would say.",
-    "Let me dedicate my heart to answering that!",
-    "SHINZOU WO SASAGEYO! (That means I'm processing your request)",
-    "Even beyond these walls, I'll find you an answer.",
-    "That's a question worthy of the Survey Corps!",
-    "Eren might go berserk over this one...",
-    "Captain Levi would say this needs cleaning up..."
-  ];
+const getReply = (message: string) => {
+  const lowercaseMessage = message.toLowerCase()
 
-  const getRandomResponse = (input: string) => {
-    const response = randomResponses[Math.floor(Math.random() * randomResponses.length)];
-    return `${response}\n\nRegarding "${input}": Let me analyze this with the power of the Founding Titan...`;
-  };
+  const keywordMappings = {
+    greetings: ["hi", "hello", "hey", "greetings"],
+    howAreYou: ["how are you", "how are things", "how's it going"],
+    loveYou: ["love you", "i love you"],
+    jokes: ["tell me a joke", "make me laugh", "joke"],
+    encouragement: ["motivate me", "encourage me", "uplift me"]
+  }
+
+  for (const [category, keywords] of Object.entries(keywordMappings)) {
+    if (keywords.some((keyword) => lowercaseMessage.includes(keyword))) {
+      const responses = trainedResponses[category as keyof typeof trainedResponses]
+      return responses[Math.floor(Math.random() * responses.length)]
+    }
+  }
+
+  // Default to sarcasm if no keyword matches
+  const sarcasticResponses = trainedResponses.sarcasm
+  return sarcasticResponses[Math.floor(Math.random() * sarcasticResponses.length)]
+}
+
+export default function Terminal() {
+  const [history, setHistory] = useState<CommandHistory[]>([])
+  const [currentCommand, setCurrentCommand] = useState('')
+  const [commandHistory, setCommandHistory] = useState<string[]>([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+  const terminalRef = useRef<HTMLDivElement>(null)
 
   const commands = {
-    help: () => ({
-      content: `Available Commands:
-┌────────────┬──────────────────────────────────┐
-│ Command    │ Description                      │
-├────────────┼──────────────────────────────────┤
-│ help       │ Display available commands       │
-│ features   │ Show MikasaAI features          │
-│ roadmap    │ View project roadmap            │
-│ about      │ Learn about MikasaAI            │
-│ github     │ Visit our GitHub                │
-│ twitter    │ Follow us on Twitter            │
-│ chat       │ Start interactive chat          │
-└────────────┴──────────────────────────────────┘`,
-      isTable: true
-    }),
+    help: () => `Available commands:
+╭───────────────────────────────────────────╮
+│  help     : Show this list                │
+│  features : List MikasaAI features        │
+│  roadmap  : View project roadmap          │
+│  about    : What is MikasaAI?             │
+│  github   : Visit GitHub profile          │
+│  twitter  : Visit Twitter profile         │
+│  ca       : Display token address         │
+╰───────────────────────────────────────────╯`,
 
-    features: () => ({
-      content: `╔════ ✨ Features ════════════════════════╗
-║                                        ║
-║ 🤖 Interactive CLI Interface           ║
-║ 📚 Dynamic API Understanding           ║
-║ 💻 Custom Code Generation              ║
-║ ⚡ Smart Resource Management           ║
-║ 📁 Organized Project Structure         ║
-║                                        ║
-╚════════════════════════════════════════╝`,
-      isTable: true
-    }),
-
-    roadmap: () => ({
-      content: `╔═══════ Roadmap ═══════════════════════╗
-║                                        ║
-║ Phase 1: Token Launch                  ║
-║ ├─ Initial distribution               ║
-║ └─ Community building                 ║
-║                                        ║
-║ Phase 2: Integration                   ║
-║ ├─ API infrastructure                 ║
-║ └─ Developer tools                    ║
-║                                        ║
-║ Phase 3: Ecosystem Growth              ║
-║ ├─ Partner integrations               ║
-║ └─ Advanced features                  ║
-║                                        ║
-╚════════════════════════════════════════╝`,
-      isTable: true
-    }),
-
-    about: () => "MikasaAI: Your AI-powered developer assistant. Like Mikasa Ackerman, we're here to protect your development process. Dedicate your heart to coding! ⚔️",
+    ca: () => 'E7Rbz6xX45yGS8jWbkkLQvWiP4pXRsUyyosiYYCXpump',
 
     github: () => {
-      window.open('https://github.com/mikasaai', '_blank');
-      return "Opening GitHub repository... Dedicate your heart! ⚔️";
+      window.open('https://github.com', '_blank')
+      return 'Opening GitHub... Stay vigilant out there.'
     },
 
     twitter: () => {
-      window.open('https://twitter.com/mikasaai', '_blank');
-      return "Following the path to Twitter... Tatakae! 🦅";
+      window.open('https://x.com', '_blank')
+      return 'Opening Twitter... Don\'t let it distract you from our mission.'
+    },
+
+    about: () => `MikasaAI: Your relentless AI-powered developer assistant. As unstoppable as a titan, but on your side.`,
+
+    features: () => `MikasaAI Features:
+╭───────────────────────────────────────────╮
+│ Titan-class CLI: Unbeatable interface     │
+│ ODM-gear API: Swift, agile responses      │
+│ Walls of Code: Impenetrable security      │
+│ Ackerman Reflex: Lightning-fast dev       │
+│ Precision Coding: Surgical accuracy       │
+╰───────────────────────────────────────────╯`,
+
+    roadmap: () => `MikasaAI Roadmap:
+╭───────────────────────────────────────────╮
+│  Phase 1: Breach the Walls (Launch)       │
+│  Phase 2: Retake Wall Maria (Integrate)   │
+│  Phase 3: Reach the Sea (Expand)          │
+╰───────────────────────────────────────────╯`
+  }
+
+  const handleCommand = async (command: string) => {
+    const trimmedCommand = command.trim().toLowerCase()
+    if (!trimmedCommand) return
+
+    setCommandHistory(prev => [...prev, trimmedCommand])
+    setHistoryIndex(-1)
+
+    const newHistoryItem = { command: trimmedCommand, output: '', loading: false }
+    setHistory(prev => [...prev, newHistoryItem])
+
+    const [cmd, ...args] = trimmedCommand.split(' ')
+    const handler = commands[cmd as keyof typeof commands]
+
+    if (handler) {
+      const output = await handler()
+      setHistory(prev => prev.map((item, i) =>
+        i === prev.length - 1 ? { ...item, output } : item
+      ))
+    } else {
+      setHistory(prev => prev.map((item, i) =>
+        i === prev.length - 1 ? { ...item, loading: true } : item
+      ))
+
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      const reply = getReply(trimmedCommand)
+      setHistory(prev => prev.map((item, i) =>
+        i === prev.length - 1 ? { ...item, loading: false, output: reply } : item
+      ))
     }
-  };
+  }
 
-  // Training data for intelligent responses
-  const responsePatterns = [
-    { keywords: ['hi', 'hello', 'hey'], responses: [
-      "Well, if it isn't a brave soldier! What brings you to our walls today?",
-      "Ah, another recruit! Try not to get eaten by a titan while you're here.",
-      "Welcome to the Survey Corps! Let's hope you last longer than the extras in episode 1..."
-    ]},
-    { keywords: ['how', 'what', 'why', 'when', 'where'], responses: [
-      "Hmm, asking the real questions like Armin would...",
-      "That's the kind of curiosity that gets you promoted in the Survey Corps!",
-      "Let me consult my ODM gear manual... Oh wait, wrong reference."
-    ]},
-    { keywords: ['help', 'assist', 'support'], responses: [
-      "Need backup? Even Mikasa needs help sometimes... rarely, but sometimes.",
-      "I'll assist you like Mikasa assists Eren - minus the obsession part.",
-      "Ready to help! Though I can't promise I'm as reliable as thunder spears..."
-    ]},
-    { keywords: ['thanks', 'thank', 'appreciate'], responses: [
-      "No need for thanks - we're all soldiers here! Unless you're a titan spy...",
-      "Gratitude noted! Now back to protecting humanity (or whatever's left of it).",
-      "You're welcome! Just don't expect me to salute back, I'm busy scanning for titans."
-    ]},
-    { keywords: ['bye', 'goodbye', 'later'], responses: [
-      "Leaving so soon? The titans were just about to join the party!",
-      "Farewell, soldier! Try not to get eaten on your way out.",
-      "Until next time! Remember: beyond these walls is freedom (and certain death)."
-    ]}
-  ];
-
-  const getIntelligentResponse = (input: string) => {
-    const lowercaseInput = input.toLowerCase();
-    
-    // Check for exact command matches first
-    if (commands[lowercaseInput as keyof typeof commands]) {
-      return commands[lowercaseInput as keyof typeof commands]();
-    }
-
-    // Look for keyword matches in the input
-    for (const pattern of responsePatterns) {
-      if (pattern.keywords.some(keyword => lowercaseInput.includes(keyword))) {
-        return {
-          content: pattern.responses[Math.floor(Math.random() * pattern.responses.length)]
-        };
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleCommand(currentCommand)
+      setCurrentCommand('')
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (commandHistory.length > 0 && historyIndex < commandHistory.length - 1) {
+        const newIndex = historyIndex + 1
+        setHistoryIndex(newIndex)
+        setCurrentCommand(commandHistory[commandHistory.length - 1 - newIndex])
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1
+        setHistoryIndex(newIndex)
+        setCurrentCommand(commandHistory[commandHistory.length - 1 - newIndex])
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1)
+        setCurrentCommand('')
       }
     }
-
-    // Default response for unmatched inputs
-    return {
-      content: [
-        "That's an interesting approach... for a titan.",
-        "Even Eren makes more sense sometimes, and he's always screaming.",
-        "Did you learn that in titan school? Because it shows.",
-        "That's cute. Have you considered joining the Garrison? They accept everyone.",
-        "Fascinating input! Almost as fascinating as watching paint dry on the walls.",
-        "Even the Colossal Titan would scratch his head at that one...",
-        "That's... unique. Like Eren's ability to consistently make bad decisions.",
-        "Interesting strategy! Almost as effective as bringing a knife to a titan fight.",
-        "Your words are bold! Like charging at a titan without ODM gear.",
-        "That's one way to do it... if you're trying to get eaten."
-      ][Math.floor(Math.random() * 10)]
-    };
-  };
-
-  const handleCommand = (cmd: string) => {
-    const trimmedCmd = cmd.trim();
-    if (trimmedCmd === '') return;
-
-    setLines(prev => [...prev, { content: `> ${cmd}`, isCommand: true }]);
-    
-    const response = getIntelligentResponse(trimmedCmd);
-    if (typeof response === 'string') {
-      setLines(prev => [...prev, { content: response }]);
-    } else {
-      setLines(prev => [...prev, response]);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleCommand(currentInput);
-      setCurrentInput('');
-    }
-  };
+  }
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [lines]);
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight
+    }
+  }, [history])
 
   return (
-    <div className="terminal-container backdrop-blur-sm bg-black/80">
-      <div className="terminal-header">
-        <div className="terminal-button red"></div>
-        <div className="terminal-button yellow"></div>
-        <div className="terminal-button green"></div>
-        <span className="ml-4 text-xs text-gray-400">mikasa@survey-corps ~ </span>
+    <div
+      className="terminal-container w-full h-[70vh] bg-gradient-to-b from-black via-gray-900 to-gray-800 text-white font-mono rounded-lg overflow-hidden border border-gray-700 shadow-xl relative"
+      style={{
+        backgroundImage: 'url("/path-to-attack-on-titan-bg.jpg")',
+        backgroundSize: 'cover',
+        backgroundBlendMode: 'multiply',
+      }}
+    >
+      <div className="terminal-header flex items-center gap-2 p-2 bg-black/80 border-b border-gray-700">
+        <div className="h-3 w-3 rounded-full bg-red-600 shadow-md"></div>
+        <div className="h-3 w-3 rounded-full bg-yellow-500 shadow-md"></div>
+        <div className="h-3 w-3 rounded-full bg-green-500 shadow-md"></div>
+        <div className="ml-2 text-xs font-bold text-white/80">MikasaAI Terminal v1.0.2</div>
       </div>
-      <div className="terminal-content">
-        {lines.map((line, i) => (
-          <div 
-            key={i} 
-            className={`terminal-line ${line.isError ? 'text-red-400' : ''} ${line.isTable ? 'whitespace-pre font-mono' : ''}`}
-          >
-            {line.isCommand ? (
-              <span className="terminal-prompt text-rose-400">{line.content}</span>
-            ) : (
-              line.content
-            )}
+      <div
+        ref={terminalRef}
+        className="terminal-body h-[calc(100%-2rem)] overflow-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent text-sm"
+      >
+        <div className="text-white font-bold">
+          MikasaAI combat systems initialized. Type <span className="text-red-500">'help'</span> for available commands.
+        </div>
+        {history.map((item, i) => (
+          <div key={i} className="space-y-1 py-2 border-b border-gray-700">
+            <div className="flex items-center gap-2">
+              <span className="text-red-500">$</span>
+              <span className="font-bold text-white">{item.command}</span>
+            </div>
+            <div className="ml-4 whitespace-pre-wrap text-gray-300">
+              {item.loading ? (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing request...
+                </div>
+              ) : (
+                item.output
+              )}
+            </div>
           </div>
         ))}
-        <div className="terminal-line">
-          <span className="terminal-prompt text-rose-400">{'> '}</span>
+        <div className="flex items-center gap-2 pt-2">
+          <span className="text-red-500">$</span>
           <input
             type="text"
-            value={currentInput}
-            onChange={(e) => setCurrentInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="terminal-input"
+            value={currentCommand}
+            onChange={(e) => setCurrentCommand(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="flex-1 bg-transparent outline-none text-white placeholder-gray-500"
+            placeholder="Enter command..."
             autoFocus
-            placeholder="Enter a command, soldier..."
           />
         </div>
-        <div ref={bottomRef} />
       </div>
     </div>
-  );
-};
-
-export default Terminal;
+  )
+}
