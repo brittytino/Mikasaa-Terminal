@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Attack on Titan';
+  src: url('/fonts/Attack_Graffiti_Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  overflow: hidden;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
+
+.terminal-container {
+  position: relative;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3),
+              0 0 40px rgba(239, 68, 68, 0.2),
+              0 0 60px rgba(239, 68, 68, 0.1);
+}
+
+.terminal-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.1) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.terminal-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-red-800\/20 {
+  scrollbar-color: rgba(153, 27, 27, 0.2) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(153, 27, 27, 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(153, 27, 27, 0.4);
+}
+
+::selection {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fff;
+}
+
+.font-aot {
+  font-family: 'Attack on Titan', sans-serif;
+}
+
+@keyframes title-glow {
+  0%, 100% {
+    text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+  }
+  50% {
+    text-shadow: 0 0 30px rgba(220, 38, 38, 0.6);
+  }
+}
+
+.animate-title {
+  animation: title-glow 3s ease-in-out infinite;
+}
+
+.bg-aot-pattern {
+  background-image: url('/images/aot-pattern.png');
+  background-repeat: repeat;
+  background-size: 200px;
+  opacity: 0.05;
+}
+
