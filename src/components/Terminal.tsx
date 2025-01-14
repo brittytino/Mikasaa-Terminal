@@ -2,50 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
+import {trainedResponses} from './responses'
 
 interface CommandHistory {
   command: string
   output: string
   loading?: boolean
-}
-
-const trainedResponses = {
-  greetings: [
-    "Hi there! What brings you here today?",
-    "Hello! Ready to take on some titans of code?",
-    "Hey! Let's make this conversation as sharp as Levi's blades.",
-    "Greetings, warrior. What's on your mind?"
-  ],
-  howAreYou: [
-    "I'm just a terminal, but if I had feelings, I'd say I'm doing great!",
-    "Functioning at peak efficiency, thanks for asking! What about you?",
-    "I'm here, ready to assist. What about you?",
-    "Always ready to help. How about you?"
-  ],
-  loveYou: [
-    "Oh, stop it! You're making me blush... if I could.",
-    "Love you too! But let’s focus on the mission, shall we?",
-    "Careful, or I might fall for you. Just kidding, I’m all circuits!",
-    "Aww, you're too kind. Let’s conquer challenges together!"
-  ],
-  jokes: [
-    "Why did the titan cross the wall? To get to the other side.",
-    "Knock, knock. Who’s there? A colossal titan! Run!",
-    "What’s the best way to fight titans? With a sense of humor!",
-    "Your joke is so bad, even Sasha wouldn’t steal it."
-  ],
-  encouragement: [
-    "You're doing great! Just like Mikasa on the battlefield.",
-    "Keep it up! You’ve got the spirit of a true scout.",
-    "Your determination reminds me of Eren’s resilience. Keep pushing forward!",
-    "Every little step counts. You’ve got this!"
-  ],
-  sarcasm: [
-    "Oh, how original. I haven’t heard that one before.",
-    "Are you trying to impress me? Because it’s not working.",
-    "I’ve seen potatoes with more interesting things to say.",
-    "Your words are like titans – big, slow, and not very bright."
-  ]
 }
 
 const getReply = (message: string) => {
@@ -80,46 +42,40 @@ export default function Terminal() {
 
   const commands = {
     help: () => `Available commands:
-╭───────────────────────────────────────────╮
-│  help     : Show this list                │
-│  features : List MikasaAI features        │
-│  roadmap  : View project roadmap          │
-│  about    : What is MikasaAI?             │
-│  github   : Visit GitHub profile          │
-│  twitter  : Visit Twitter profile         │
-│  ca       : Display token address         │
-╰───────────────────────────────────────────╯`,
+help     : Show this list
+features : List MikasaAI features
+roadmap  : View project roadmap
+about    : What is MikasaAI?
+github   : Visit GitHub profile
+twitter  : Visit Twitter profile
+ca       : Display token address`,
 
-    ca: () => 'E7Rbz6xX45yGS8jWbkkLQvWiP4pXRsUyyosiYYCXpump',
+ca: () => 'E7Rbz6xX45yGS8jWbkkLQvWiP4pXRsUyyosiYYCXpump',
 
-    github: () => {
-      window.open('https://github.com', '_blank')
-      return 'Opening GitHub... Stay vigilant out there.'
-    },
+github: () => {
+  window.open('https://github.com', '_blank')
+  return 'Opening GitHub... Stay vigilant out there.'
+},
 
-    twitter: () => {
-      window.open('https://x.com', '_blank')
-      return 'Opening Twitter... Don\'t let it distract you from our mission.'
-    },
+twitter: () => {
+  window.open('https://x.com', '_blank')
+  return 'Opening Twitter... Don\'t let it distract you from our mission.'
+},
 
-    about: () => `MikasaAI: Your relentless AI-powered developer assistant. As unstoppable as a titan, but on your side.`,
+about: () => `MikasaAI: Your relentless AI-powered developer assistant. As unstoppable as a titan, but on your side.`,
 
-    features: () => `MikasaAI Features:
-╭───────────────────────────────────────────╮
-│ Titan-class CLI: Unbeatable interface     │
-│ ODM-gear API: Swift, agile responses      │
-│ Walls of Code: Impenetrable security      │
-│ Ackerman Reflex: Lightning-fast dev       │
-│ Precision Coding: Surgical accuracy       │
-╰───────────────────────────────────────────╯`,
+features: () => `MikasaAI Features:
+Titan-class CLI: Unbeatable interface
+ODM-gear API: Swift, agile responses
+Walls of Code: Impenetrable security
+Ackerman Reflex: Lightning-fast dev
+Precision Coding: Surgical accuracy`,
 
-    roadmap: () => `MikasaAI Roadmap:
-╭───────────────────────────────────────────╮
-│  Phase 1: Breach the Walls (Launch)       │
-│  Phase 2: Retake Wall Maria (Integrate)   │
-│  Phase 3: Reach the Sea (Expand)          │
-╰───────────────────────────────────────────╯`
-  }
+roadmap: () => `MikasaAI Roadmap:
+Phase 1: Breach the Walls (Launch)
+Phase 2: Retake Wall Maria (Integrate)
+Phase 3: Reach the Sea (Expand)`
+}
 
   const handleCommand = async (command: string) => {
     const trimmedCommand = command.trim().toLowerCase()
